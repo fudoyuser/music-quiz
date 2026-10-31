@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Quiz kiến thức âm nhạc theo từng ca sĩ và bài hát: nội dung, giọng điệu và bối cảnh MV.">
+<title>Đố Vui Giai Điệu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Oswald:wght@500;700&family=Playfair+Display:ital,wght@0,700;1,500;1,700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: một cột như bìa album. Mỗi ca sĩ mang bảng màu riêng (data-theme); trang chủ là phòng thu tối */
+:root, [data-theme="home"] {
+  --bg: #111018; --bg-art: radial-gradient(1100px 480px at 50% -10%, #3b2d6a66, transparent 70%);
+  --card: #1b1925; --opt: #23202f; --ink: #f3f0fa; --muted: #a39db3; --line: #322d40;
+  --accent: #8f7bff; --accent-ink: #ffffff; --accent2: #ff7ab6;
+  --ok: #5fd0a0; --ok-soft: #173a2e; --no: #ff7a6b; --no-soft: #3d1d1c;
+  --display: "Fraunces", Georgia, serif;
+  color-scheme: dark;
+}
+[data-theme="son-tung"] {
+  --bg: #0d0b0a;
+  --bg-art: radial-gradient(800px 420px at 50% -8%, #e2b65a30, transparent 70%), radial-gradient(600px 400px at 100% 100%, #b5302a22, transparent 70%);
+  --card: #171412; --opt: #201b18; --ink: #f6efe4; --muted: #ab9f90; --line: #2f2822;
+  --accent: #e2b65a; --accent-ink: #1a1305; --accent2: #d0463b;
+  --ok: #7fd3a4; --ok-soft: #173329; --no: #ff7d6b; --no-soft: #3b1a16;
+  --display: "Oswald", "Arial Narrow", sans-serif;
+  color-scheme: dark;
+}
+[data-theme="hoang-thuy-linh"] {
+  --bg: #fff6ec;
+  --bg-art: radial-gradient(700px 420px at 100% 0%, #ffc9a8aa, transparent 70%), radial-gradient(640px 420px at 0% 100%, #b7e6d6aa, transparent 70%);
+  --card: #ffffff; --opt: #fff8f1; --ink: #3b1f16; --muted: #8a6a5c; --line: #f2dccb;
+  --accent: #d9452b; --accent-ink: #ffffff; --accent2: #1f8a74;
+  --ok: #23845f; --ok-soft: #ddf1e7; --no: #c43d2e; --no-soft: #fbe2dc;
+  --display: "Fraunces", Georgia, serif;
+  color-scheme: light;
+}
+[data-theme="taylor-swift"] {
+  --bg: #f4f1fb;
+  --bg-art: radial-gradient(700px 420px at 0% 0%, #d9ccf5cc, transparent 70%), radial-gradient(640px 420px at 100% 100%, #f8cfe0aa, transparent 70%);
+  --card: #ffffff; --opt: #faf8ff; --ink: #231b3a; --muted: #6f6688; --line: #e3dcf2;
+  --accent: #6b4fd8; --accent-ink: #ffffff; --accent2: #d6457e;
+  --ok: #2f8a63; --ok-soft: #e0f2e9; --no: #c8423a; --no-soft: #fbe3e0;
+  --display: "Playfair Display", Georgia, serif;
+  color-scheme: light;
+}
+[data-theme="adele"] {
+  --bg: #0e0e0f;
+  --bg-art: radial-gradient(900px 420px at 50% -10%, #ffffff14, transparent 70%);
+  --card: #171718; --opt: #1e1e20; --ink: #f2f2f0; --muted: #9d9d99; --line: #2c2c2e;
+  --accent: #c9a26b; --accent-ink: #141009; --accent2: #8a8a86;
+  --ok: #8fd1a8; --ok-soft: #1b3226; --no: #f08b7c; --no-soft: #3a1f1b;
+  --display: "Playfair Display", Georgia, serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  margin: 0; min-height: 100vh;
+  background: var(--bg-art), var(--bg); background-attachment: fixed;
+  color: var(--ink); font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 16px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+  transition: background-color .4s, color .4s;
+}
+[hidden] { display: none !important; }
+.wrap { max-width: 760px; margin: 0 auto; display: grid; gap: 32px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.15; text-wrap: balance; margin: 0; }
+[data-theme="son-tung"] h1, [data-theme="son-tung"] h3 { text-transform: uppercase; letter-spacing: .01em; }
+.label { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Masthead */
+.mast { display: grid; gap: 8px; }
+.mast h1 { font-size: clamp(36px, 8vw, 58px); font-family: "Fraunces", Georgia, serif; }
+.mast h1 em { font-style: italic; font-weight: 500; color: var(--accent); }
+.mast p { margin: 0; color: var(--muted); max-width: 58ch; }
+.legend { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+body:not([data-theme="home"]) .mast { display: none; }
+
+/* Nhãn nhóm câu hỏi */
+.tag { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.tag.nd::before, .tag.gd::before, .tag.mv::before { margin-right: 6px; }
+.tag.nd::before { content: "✎"; }
+.tag.gd::before { content: "♪"; }
+.tag.mv::before { content: "▶"; }
+
+/* Kệ ca sĩ: mỗi thẻ là một chiếc đĩa than mang màu của ca sĩ */
+.shelf { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.artist {
+  position: relative; overflow: hidden; text-align: left; color: var(--ink);
+  background: var(--bg-art), var(--card); border: 1px solid var(--line); border-radius: 18px;
+  padding: 0; display: grid; grid-template-rows: auto 1fr; transition: transform .2s, box-shadow .2s;
+}
+.artist:hover { transform: translateY(-3px); box-shadow: 0 14px 40px -18px var(--accent); }
+.cover { height: 128px; position: relative; border-bottom: 1px solid var(--line); background: var(--opt); overflow: hidden; }
+.vinyl {
+  position: absolute; width: 150px; height: 150px; right: -28px; top: -11px; border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0 15%, #0b0b0d 16% 18%, transparent 19%), repeating-radial-gradient(circle, #141416 0 2px, #1f1f22 2px 4px);
+  box-shadow: 0 0 0 1px #00000040; transition: transform 1.2s ease;
+}
+.artist:hover .vinyl { transform: rotate(180deg); }
+.cover .initial { position: absolute; left: 20px; bottom: 12px; font-family: var(--display); font-size: 44px; line-height: 1; color: var(--accent); }
+.artist .body { padding: 18px 20px 20px; display: grid; gap: 6px; align-content: start; }
+.artist h3 { font-size: 25px; }
+.artist .meta { font-size: 14px; color: var(--muted); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+.pill { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; padding: 3px 10px; border-radius: 99px; background: var(--accent); color: var(--accent-ink); }
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.soft { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.artist.soon { cursor: default; border-style: dashed; background: transparent; }
+.artist.soon:hover { transform: none; box-shadow: none; }
+.artist.soon .cover { background: transparent; display: grid; place-items: center; font-size: 36px; color: var(--muted); }
+.artist.soon h3 { color: var(--muted); font-weight: 500; font-style: italic; font-size: 20px; }
+
+/* Trang ca sĩ */
+.page { display: grid; gap: 22px; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.back { background: none; border: 0; padding: 0; color: var(--muted); font-size: 14px; }
+.back:hover { color: var(--accent); }
+.hero { display: grid; gap: 6px; }
+.hero h1 { font-size: clamp(36px, 8vw, 56px); }
+[data-theme="son-tung"] .hero h1 { font-size: clamp(44px, 10vw, 72px); }
+.hero p { margin: 0; color: var(--muted); }
+.filter { display: grid; gap: 10px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1.5px solid var(--line); background: var(--opt); border-radius: 99px; padding: 7px 14px; font-size: 14px; color: var(--ink); }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.chip small { opacity: .7; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.tracks { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.song {
+  width: 100%; display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; text-align: left;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; transition: border-color .15s, transform .15s;
+}
+.song:hover { border-color: var(--accent); transform: translateX(2px); }
+.song .no { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; color: var(--accent); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--opt); }
+.song h3 { font-size: 21px; }
+.song .sub { font-size: 13px; color: var(--muted); }
+.song .go { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.song.all { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.song.all .no { background: transparent; color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent-ink) 40%, transparent); }
+.song.all .sub, .song.all .go { color: var(--accent-ink); opacity: .85; }
+
+/* Quiz */
+.trk { display: grid; grid-auto-flow: column; gap: 3px; }
+.trk span { height: 6px; border-radius: 3px; background: var(--line); }
+.trk span.ok { background: var(--ok); }
+.trk span.no { background: var(--no); }
+.trk span.now { background: var(--accent); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: clamp(20px, 5vw, 36px); display: grid; gap: 20px; box-shadow: 0 20px 50px -30px color-mix(in srgb, var(--accent) 60%, transparent); }
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.qhead .left { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.num, .score { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; font-variant-numeric: tabular-nums; }
+.num { color: var(--accent); }
+.score { color: var(--muted); }
+.from { font-size: 13px; color: var(--muted); margin-top: -12px; }
+.q { font-size: clamp(22px, 4.5vw, 28px); font-family: "Fraunces", Georgia, serif; font-weight: 700; }
+.opts { display: grid; gap: 10px; }
+.opt {
+  display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: center; text-align: left;
+  background: var(--opt); border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; color: var(--ink);
+  transition: border-color .12s, background .12s, transform .12s;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); transform: translateX(2px); }
+.opt .key { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); color: var(--muted); }
+.opt:disabled { cursor: default; }
+.opt.right { border-color: var(--ok); background: var(--ok-soft); }
+.opt.right .key { background: var(--ok); border-color: var(--ok); color: var(--card); }
+.opt.wrong { border-color: var(--no); background: var(--no-soft); }
+.opt.wrong .key { background: var(--no); border-color: var(--no); color: var(--card); }
+.explain { border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; }
+.explain strong { font-family: "Fraunces", Georgia, serif; font-size: 19px; }
+.explain.ok strong { color: var(--ok); }
+.explain.no strong { color: var(--no); }
+.explain p { margin: 0; color: var(--muted); }
+.actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 99px; padding: 11px 22px; background: var(--accent); color: var(--accent-ink); font-weight: 600; transition: filter .15s; }
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.btn.ghost:hover { border-color: var(--accent); }
+
+/* Kết quả */
+.big { font-family: var(--display); font-size: clamp(64px, 16vw, 104px); line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+.big small { font-size: .4em; color: var(--muted); font-weight: 500; }
+.verdict { font-family: "Fraunces", Georgia, serif; font-style: italic; font-size: 22px; margin: 0; }
+.breakdown { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.breakdown .label { font-size: 11px; }
+.breakdown div { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; background: var(--opt); display: grid; gap: 2px; }
+.breakdown b { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 18px; font-variant-numeric: tabular-nums; }
+.review { display: grid; margin: 0; padding: 0; list-style: none; }
+.review li { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-size: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.review li:last-child { border-bottom: 0; }
+.review .mark { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.review .mark.ok { color: var(--ok); }
+.review .mark.no { color: var(--no); }
+.review .ans { color: var(--muted); }
+.foot { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+.foot a { color: var(--muted); }
+@media (max-width: 480px) { .song { grid-template-columns: 36px 1fr; } .song .no { width: 36px; height: 36px; } .song .go { display: none; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body data-theme="home">
+
+<div class="wrap">
+  <header class="mast">
+    <span class="label">Thư viện câu đố âm nhạc</span>
+    <h1>Đố Vui <em>Giai Điệu</em></h1>
+    <p>Chọn một ca sĩ, chọn bài hát, rồi kiểm tra xem bạn hiểu bài đến đâu: lời ca nói gì, bài mang giọng điệu nào, và MV được dựng ra sao. Mỗi đáp án đều có giải thích.</p>
+    <div class="legend"><span class="tag nd">Nội dung</span><span class="tag gd">Giọng điệu</span><span class="tag mv">Bối cảnh MV</span></div>
+  </header>
+
+  <section id="library" aria-label="Chọn ca sĩ">
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <section id="view" class="page" hidden aria-live="polite"></section>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+
+<script>
+// t: "nd" = Nội dung (lời, thông điệp), "gd" = Giọng điệu (thể loại, cảm xúc, chất giọng), "mv" = Bối cảnh MV
+const ARTISTS = [
+  {
+    id: "son-tung", name: "Sơn Tùng M-TP", initial: "M-TP",
+    meta: "Việt Nam · ca sĩ, nhạc sĩ, MTP Entertainment",
+    songs: [
+      {
+        id: "lac-troi", title: "Lạc Trôi", year: 2017, album: "Single",
+        sources: [["Wikipedia: Lạc trôi", "https://en.wikipedia.org/wiki/L%E1%BA%A1c_tr%C3%B4i"], ["Vietnam News", "https://vietnamnews.vn/life-style/349067/pop-idol-s-music-video-sees-5-million-youtube-hits-after-one-day.html"], ["VietnamNet", "https://vietnamnet.vn/son-tung-m-tp-hoa-than-thanh-my-nam-co-trang-trong-mv-ma-mi-nhat-su-nghiep-ig21749.html"]],
+        questions: [
+          { t: "nd", q: "Câu mở đầu \"Người theo hương hoa mây mù giăng lối, làn sương khói phôi phai đưa bước ai xa rồi\" gợi ra điều gì?", a: "Bóng người thương dần khuất xa trong sương khói, để lại người ở lại", w: ["Cảnh lễ hội mùa xuân rộn ràng", "Một chuyến đi chơi vui vẻ cùng bạn bè", "Lời hẹn ước sẽ sớm gặp lại nhau"], e: "Ngay từ câu đầu, bài hát dựng cảnh chia xa mờ ảo: người kia đi theo hương hoa, mây mù, sương khói, còn nhân vật chính ở lại một mình." },
+          { t: "nd", q: "Chủ đề cảm xúc xuyên suốt của Lạc Trôi là gì?", a: "Nỗi cô đơn, vấn vương khi người thương đã rời xa", w: ["Niềm vui khi tình yêu được đáp lại", "Lời kêu gọi sống hết mình với tuổi trẻ", "Sự giận dữ muốn trả đũa người cũ"], e: "Nhân vật trong bài lạc lối giữa hồi ức, men say và nỗi nhớ, đúng như tựa đề \"Lạc Trôi\"." },
+          { t: "nd", q: "Lời bài hát chủ yếu dùng lớp ngôn từ nào?", a: "Ngôn từ cổ phong, giàu hình ảnh thiên nhiên mờ ảo", w: ["Tiếng lóng đường phố hiện đại", "Toàn bộ là tiếng Anh", "Ngôn ngữ đối thoại hài hước"], e: "Mây mù, sương khói, hương hoa, men say... tạo màu cổ trang khớp với hình ảnh MV." },
+          { t: "gd", q: "Về phần phối khí, Lạc Trôi thường được mô tả là sự kết hợp của gì?", a: "Future bass và âm sắc nhạc cụ truyền thống", w: ["Bolero và nhạc đồng quê Mỹ", "Rock nặng và piano cổ điển", "Acoustic guitar mộc hoàn toàn"], e: "Bài hát dùng nền EDM (future bass) pha chất liệu truyền thống. Hòa âm phối khí do Triple D thực hiện." },
+          { t: "gd", q: "Không khí chung mà bài hát và MV tạo ra là gì?", a: "Ma mị, hư ảo, u buồn", w: ["Tươi sáng, nhí nhảnh", "Hùng tráng, cổ vũ", "Hài hước, châm biếm"], e: "Báo chí gọi đây là MV \"ma mị nhất sự nghiệp\" của Sơn Tùng, xen giữa thực và ảo." },
+          { t: "mv", q: "MV Lạc Trôi được công chiếu vào thời điểm nào?", a: "0 giờ ngày 1/1/2017", w: ["Đêm Giao thừa Tết Nguyên đán 2017", "Ngày Valentine 14/2/2017", "Ngày 1/7/2019"], e: "MV ra mắt đúng khoảnh khắc năm mới dương lịch 2017 và đạt gần 5 triệu lượt xem trong ngày đầu." },
+          { t: "mv", q: "Nhiều cảnh trong MV được quay tại ngôi chùa nào?", a: "Chùa Linh Quy Pháp Ấn (Lâm Đồng)", w: ["Chùa Một Cột (Hà Nội)", "Chùa Thiên Mụ (Huế)", "Chùa Bái Đính (Ninh Bình)"], e: "Chùa Linh Quy Pháp Ấn ở Bảo Lâm, Lâm Đồng với khung cảnh mây núi là bối cảnh nổi bật của MV." },
+          { t: "mv", q: "Trang phục của Sơn Tùng trong MV có điểm gì gây chú ý?", a: "Áo cổ trang nhưng đi giày sneaker hiện đại", w: ["Mặc vest công sở suốt MV", "Mặc áo dài trắng học sinh", "Mặc đồ phi hành gia"], e: "Sự pha trộn cổ điển và hiện đại thể hiện cả ở trang phục: giày sneaker xuất hiện cùng áo cổ trang." },
+          { t: "mv", q: "Lạc Trôi lập kỷ lục nào trên YouTube?", a: "MV EDM Việt đầu tiên đạt 200 triệu lượt xem", w: ["MV Việt đầu tiên đạt 1 tỷ lượt xem", "MV đầu tiên có rapper Mỹ góp giọng", "MV đầu tiên quay bằng máy IMAX"], e: "Lạc Trôi trở thành MV EDM đầu tiên của Việt Nam chạm mốc 200 triệu lượt xem." }
+        ]
+      },
+      {
+        id: "hay-trao-cho-anh", title: "Hãy Trao Cho Anh", year: 2019, album: "Single, ft. Snoop Dogg",
+        sources: [["VnExpress International", "https://e.vnexpress.net/news/life/arts/vietnamese-pop-star-snoop-dogg-storm-youtube-with-new-music-video-3946535.html"], ["Saigoneer", "https://saigoneer.com/saigon-music-art/16857-video-worlds-collide-in-new-son-tung-m-tp-single-featuring-snoop-dogg"], ["Znews", "https://znews.vn/snoop-dogg-lam-gi-cho-hay-trao-cho-anh-cua-son-tung-voi-20-giay-post962403.html"]],
+        questions: [
+          { t: "nd", q: "Hãy Trao Cho Anh nói về điều gì?", a: "Chàng trai say nắng và tán tỉnh, mong cô gái trao tình cảm cho mình", w: ["Nỗi đau sau khi chia tay", "Ký ức tuổi thơ ở quê nhà", "Lời xin lỗi gửi người yêu cũ"], e: "Bài hát là lời tán tỉnh trực diện: anh muốn cô \"trao cho anh\" thứ anh đang mong chờ." },
+          { t: "nd", q: "Ai góp một đoạn rap trong bài?", a: "Snoop Dogg", w: ["Eminem", "Jay-Z", "Đen Vâu"], e: "Rapper Mỹ Snoop Dogg góp một đoạn rap tiếng Anh, đánh dấu màn hợp tác quốc tế lớn của Sơn Tùng." },
+          { t: "nd", q: "Theo báo chí, Snoop Dogg xuất hiện trong bài khoảng bao lâu?", a: "Khoảng 20 giây", w: ["Khoảng 2 phút", "Cả nửa sau bài hát", "Chỉ ở đoạn intro 5 giây"], e: "Đoạn góp giọng của Snoop Dogg ngắn, khoảng 20 giây, nhưng tạo hiệu ứng truyền thông rất lớn." },
+          { t: "gd", q: "Giọng điệu của bài hát gần nhất với mô tả nào?", a: "Sôi động, nhiệt đới, đậm chất tiệc tùng và tán tỉnh", w: ["Trầm buồn, da diết như ballad", "Hùng tráng như nhạc phim sử thi", "Mộc mạc như dân ca đồng quê"], e: "Nhịp điệu nhún nhảy, không khí mùa hè và lời ca đầy tự tin làm bài hát mang chất party." },
+          { t: "gd", q: "So với Lạc Trôi, Hãy Trao Cho Anh khác thế nào về không khí?", a: "Từ cổ trang ma mị chuyển sang hiện đại, rực rỡ, vui tươi", w: ["Còn u buồn hơn Lạc Trôi", "Giữ nguyên chất cổ trang", "Chuyển hẳn sang nhạc giao hưởng"], e: "Hãy Trao Cho Anh mang hình ảnh và âm thanh hiện đại, quốc tế, đối lập với vẻ hư ảo của Lạc Trôi." },
+          { t: "mv", q: "MV Hãy Trao Cho Anh được quay chủ yếu ở đâu?", a: "Mỹ (Los Angeles và vùng lân cận)", w: ["Đà Lạt", "Seoul, Hàn Quốc", "Bali, Indonesia"], e: "Ê-kíp quay tại Mỹ. Một số nguồn còn nhắc tới cảnh sa mạc ở California." },
+          { t: "mv", q: "Ê-kíp đạo diễn MV là ai?", a: "August Frogs, ê-kíp Hàn Quốc", w: ["Joseph Kahn", "Xavier Dolan", "Kawaii"], e: "August Frogs từng làm MV cho nhiều nghệ sĩ K-pop như TaeYeon, EXID, SHINee." },
+          { t: "mv", q: "Nữ chính trong MV là ai?", a: "Madison Beer", w: ["Selena Gomez", "Hoàng Thùy Linh", "Dua Lipa"], e: "Ca sĩ Mỹ Madison Beer vào vai cô gái khiến chàng trai say mê." },
+          { t: "mv", q: "Chàng trai gặp và phải lòng cô gái trong hoàn cảnh nào?", a: "Ở một bữa tiệc tại biệt thự", w: ["Trên chuyến bay đêm", "Trong một quán cà phê sách", "Tại sân khấu concert"], e: "Ở bữa tiệc trong biệt thự, chàng trai gặp cô gái do Madison Beer đóng và \"đổ\" ngay lập tức." },
+          { t: "mv", q: "MV ra mắt vào thời điểm nào?", a: "20 giờ ngày 1/7/2019", w: ["0 giờ ngày 1/1/2019", "Ngày 14/2/2019", "Ngày 20/2/2022"], e: "MV công chiếu tối 1/7/2019 và lập loạt kỷ lục lượt xem, lượt thích trên YouTube." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "hoang-thuy-linh", name: "Hoàng Thùy Linh", initial: "HTL",
+    meta: "Việt Nam · pop pha dân gian, cộng tác với DTAP",
+    songs: [
+      {
+        id: "de-mi-noi-cho-ma-nghe", title: "Để Mị Nói Cho Mà Nghe", year: 2019, album: "Hoàng",
+        sources: [["Wikipedia", "https://en.wikipedia.org/wiki/%C4%90%E1%BB%83_M%E1%BB%8B_n%C3%B3i_cho_m%C3%A0_nghe"], ["Vietnam News", "https://vietnamnews.vn/life-style/536785/pop-singer-to-perform-at-abu-tv-song-festival.html"], ["Báo Đầu tư", "https://baodautu.vn/hoang-thuy-linh-nhan-bay-de-cu-lan-song-xanh-d116451.html"], ["PLO", "https://plo.vn/hoang-thuy-linh-tiep-tuc-dua-van-hoa-viet-vao-mv-tu-phu-post536419.html"]],
+        questions: [
+          { t: "nd", q: "Nhân vật \"Mị\" trong bài hát lấy cảm hứng từ tác phẩm nào?", a: "Vợ chồng A Phủ (Tô Hoài)", w: ["Tắt Đèn (Ngô Tất Tố)", "Chí Phèo (Nam Cao)", "Truyện Kiều (Nguyễn Du)"], e: "Mị là nhân vật trong truyện ngắn Vợ chồng A Phủ (1952) của Tô Hoài, cô gái từng sống cam chịu ở Hồng Ngài." },
+          { t: "nd", q: "Trong bài hát, Mị bày tỏ mong muốn gì?", a: "Được sống hết mình, vui chơi tận hưởng tuổi trẻ", w: ["Được trở về nhà chồng", "Được đi học xa quê", "Được giàu sang quyền lực"], e: "Khác Mị cam chịu trong truyện, Mị trong bài hát muốn tận hưởng tuổi trẻ và tự quyết cuộc đời mình." },
+          { t: "nd", q: "Ai sáng tác Để Mị Nói Cho Mà Nghe?", a: "DTAP", w: ["Sơn Tùng M-TP", "Triple D", "Hoàng Thùy Linh tự viết toàn bộ"], e: "Nhóm DTAP sáng tác và sản xuất, tiếp tục mối hợp tác lâu dài với Hoàng Thùy Linh." },
+          { t: "gd", q: "Về âm nhạc, bài hát được mô tả là gì?", a: "Pop pha tiết tấu dân ca ngũ cung", w: ["Rock ballad thập niên 80", "Jazz cổ điển", "Rap Mỹ thuần túy"], e: "Bài hát là pop hiện đại nhưng mang tiết tấu và thang âm dân ca, đúng dòng nhạc pop dân gian của Hoàng Thùy Linh." },
+          { t: "gd", q: "Hoàng Thùy Linh mô tả tinh thần bài hát thế nào?", a: "Tiếng hát tươi vui, tự do của người phụ nữ muốn phá bỏ xiềng xích", w: ["Lời than thở cam chịu số phận", "Bản tình ca buồn về sự chia ly", "Bài hát ru con dịu dàng"], e: "Bài hát lật lại hình ảnh Mị cam chịu, biến cô thành người phụ nữ chủ động và tự do." },
+          { t: "mv", q: "Theo báo chí, MV gợi nhắc những tác phẩm văn học nào?", a: "Lão Hạc, Tắt Đèn, Vợ chồng A Phủ", w: ["Dế Mèn phiêu lưu ký, Đất rừng phương Nam", "Tuổi thơ dữ dội, Kính vạn hoa", "Số đỏ, Vang bóng một thời"], e: "MV đưa vào nhiều tác phẩm văn học quen thuộc trong chương trình học, nổi bật là Lão Hạc, Tắt Đèn và Vợ chồng A Phủ." },
+          { t: "mv", q: "MV ra mắt vào thời gian nào?", a: "Tháng 6/2019", w: ["Tháng 1/2017", "Tháng 2/2022", "Tháng 12/2020"], e: "MV phát hành tháng 6/2019, sau đó bài hát nằm trong album Hoàng." },
+          { t: "mv", q: "MV giành giải nào tại Giải Cống hiến?", a: "MV của năm", w: ["Nghệ sĩ mới của năm", "Album của năm", "Nhạc sĩ của năm"], e: "Để Mị Nói Cho Mà Nghe giành giải MV của năm tại Giải Cống hiến, và thắng nhiều hạng mục Làn Sóng Xanh 2020." },
+          { t: "mv", q: "MV tiếp theo của Hoàng Thùy Linh cũng đưa văn hóa dân gian vào âm nhạc có tên gì?", a: "Tứ Phủ", w: ["See Tình", "Bánh Trôi Nước", "Lạc Trôi"], e: "Tứ Phủ đi tiếp con đường đưa tín ngưỡng, văn hóa dân gian Việt vào nhạc pop." }
+        ]
+      },
+      {
+        id: "see-tinh", title: "See Tình", year: 2022, album: "Link",
+        sources: [["Wikipedia", "https://en.wikipedia.org/wiki/See_T%C3%ACnh"], ["SGGP", "https://www.sggp.org.vn/dac-trung-mien-dat-nam-bo-vao-mv-am-nhac-moi-cua-hoang-thuy-linh-post627490.html"], ["Znews", "https://znews.vn/hoang-thuy-linh-si-tinh-post1297596.html"], ["Vietnam News", "https://vietnamnews.vn/life-style/1493549/vietnamese-music-crosses-the-border-to-go-viral.html"]],
+        questions: [
+          { t: "nd", q: "Tựa đề \"See Tình\" là cách chơi chữ của từ nào?", a: "Si tình", w: ["Say tình", "Xa tình", "Sơ tình"], e: "\"See\" đọc gần giống \"si\", ghép thành \"si tình\": say mê, yêu đắm đuối." },
+          { t: "nd", q: "Bài hát kể về trạng thái tình cảm nào?", a: "Phải lòng ai đó ngay từ cái nhìn đầu tiên và si mê", w: ["Hối hận vì đã chia tay", "Giận dữ vì bị phản bội", "Nhớ nhà khi đi xa"], e: "Nhân vật rơi vào cảm giác \"si tình\", vừa bối rối vừa vui sướng khi trúng tiếng sét ái tình." },
+          { t: "nd", q: "See Tình thuộc album nào của Hoàng Thùy Linh?", a: "Link", w: ["Hoàng", "21", "1989"], e: "See Tình là single thứ hai của album Link." },
+          { t: "gd", q: "Giọng điệu của See Tình là gì?", a: "Vui tươi, nhí nhảnh, dí dỏm", w: ["Ma mị, u buồn", "Phẫn nộ, dồn dập", "Trầm lắng, triết lý"], e: "Giai điệu bắt tai, lời ca đáng yêu giúp bài hát phù hợp để nhảy theo." },
+          { t: "gd", q: "Nhờ đâu See Tình lan ra ngoài Việt Nam?", a: "Trở thành trào lưu viral trên TikTok", w: ["Được chọn làm nhạc phim Hollywood", "Được hát tại World Cup", "Phát hành bản tiếng Anh"], e: "Bài hát viral trên TikTok, được người dùng nhiều nước nhảy theo dù không hiểu tiếng Việt." },
+          { t: "mv", q: "MV See Tình đưa người xem tới vùng nào?", a: "Miền Tây sông nước", w: ["Tây Bắc núi rừng", "Phố cổ Hà Nội", "Cao nguyên Đà Lạt"], e: "Sau nhiều MV mang chất Bắc Bộ, lần này Hoàng Thùy Linh chọn miền Tây với chợ nổi, hàng dừa, sông nước." },
+          { t: "mv", q: "Hoàng Thùy Linh vào vai gì trong MV?", a: "Một nàng tiên cá (con cá) phải lòng chàng trai", w: ["Cô gái bán hàng ở chợ nổi", "Nữ phi công", "Cô giáo làng"], e: "Cô vào vai một con cá/nàng tiên cá nhảy lên khỏi mặt nước và phải lòng chàng trai từ cái nhìn đầu tiên." },
+          { t: "mv", q: "Chàng trai khiến nàng tiên cá si tình làm nghề gì?", a: "Bán chiếu", w: ["Đánh cá", "Bán dừa", "Chèo đò chở khách"], e: "Nàng tiên cá bày tỏ tình yêu với chàng trai bán chiếu, chi tiết mang màu sắc miền Tây." },
+          { t: "mv", q: "Ai xuất hiện ở cuối MV trong vai người lái thuyền?", a: "Isaac", w: ["Sơn Tùng M-TP", "Đen Vâu", "Trấn Thành"], e: "Isaac xuất hiện cuối MV, sững người khi thấy Hoàng Thùy Linh, nối tiếp chủ đề \"si tình\"." },
+          { t: "mv", q: "Khoảng bao nhiêu phần trăm cảnh quay của MV thực hiện trên phông xanh?", a: "Khoảng 75%", w: ["Khoảng 10%", "Khoảng 40%", "100%, không quay ngoại cảnh"], e: "Khoảng 75% cảnh quay dùng phông xanh, phần kỹ xảo mất khoảng ba tháng. Đạo diễn là Kawaii." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "taylor-swift", name: "Taylor Swift", initial: "TS",
+    meta: "Mỹ · pop, ca sĩ kiêm nhạc sĩ",
+    songs: [
+      {
+        id: "blank-space", title: "Blank Space", year: 2014, album: "1989",
+        sources: [["Wikipedia", "https://en.wikipedia.org/wiki/Blank_Space"], ["Songfacts", "https://www.songfacts.com/facts/taylor-swift/blank-space"], ["Patch (Oheka Castle)", "https://patch.com/new-york/huntington/huntingtons-oheka-castle-plays-starring-role-new-taylor-swift-video-0"]],
+        questions: [
+          { t: "nd", q: "Blank Space châm biếm điều gì?", a: "Hình ảnh báo chí vẽ ra về Taylor: cô gái hẹn hò liên tục rồi bỏ người yêu", w: ["Ngành công nghiệp thời trang", "Mạng xã hội gây nghiện", "Cuộc sống ở thành phố lớn"], e: "Taylor phóng đại chính hình ảnh \"kẻ yêu đương hàng loạt\" mà truyền thông gán cho cô, biến nó thành trò đùa tự giễu." },
+          { t: "nd", q: "Câu \"Got a long list of ex-lovers, they'll tell you I'm...\" kết thúc bằng từ gì?", a: "insane", w: ["amazing", "dangerous", "lonely"], e: "\"Got a long list of ex-lovers, they'll tell you I'm insane\": nhân vật tự nhận mình \"điên\" theo lời kể của người yêu cũ." },
+          { t: "nd", q: "\"Blank space\" trong điệp khúc ám chỉ gì?", a: "Chỗ trống để viết tên người yêu mới vào danh sách", w: ["Khoảng trống trong trí nhớ", "Một căn phòng trống", "Trang nhật ký bị xé"], e: "\"I've got a blank space, baby, and I'll write your name\": chàng trai mới sắp trở thành cái tên tiếp theo." },
+          { t: "gd", q: "Giọng điệu bao trùm Blank Space là gì?", a: "Mỉa mai, tự giễu, nửa ngọt ngào nửa đáng sợ", w: ["Bi thương, tuyệt vọng", "Ngây thơ, trong trẻo tuyệt đối", "Hùng hồn như diễn văn"], e: "Bài hát chuyển từ quyến rũ ngọt ngào sang ghen tuông dữ dội, tất cả được diễn với vẻ cố tình cường điệu." },
+          { t: "gd", q: "Blank Space thuộc album nào, đánh dấu Taylor chuyển hẳn sang pop?", a: "1989", w: ["Red", "Fearless", "Midnights"], e: "1989 (2014) là album pop hoàn toàn đầu tiên của Taylor, sau giai đoạn đồng quê." },
+          { t: "mv", q: "MV Blank Space được quay chủ yếu tại đâu?", a: "Lâu đài Oheka Castle, Long Island, New York", w: ["Cung điện Buckingham, London", "Lâu đài Neuschwanstein, Đức", "Một phim trường ở Los Angeles"], e: "Phần lớn MV quay ở Oheka Castle (Huntington, New York), một số cảnh quay ở Woolworth Estate." },
+          { t: "mv", q: "Ai đóng vai bạn trai của Taylor trong MV?", a: "Người mẫu Sean O'Pry", w: ["Harry Styles", "Tom Hiddleston", "Joe Alwyn"], e: "Theo đạo diễn Joseph Kahn, chính Taylor yêu cầu chọn người mẫu Sean O'Pry." },
+          { t: "mv", q: "Ai đạo diễn MV Blank Space?", a: "Joseph Kahn", w: ["Xavier Dolan", "Sam Brown", "Mark Romanek"], e: "Joseph Kahn đạo diễn. Taylor muốn MV đặt câu hỏi: liệu vấn đề có nằm ở cô chứ không phải những chàng trai đã rời đi?" },
+          { t: "mv", q: "Khi ghen tuông, Taylor trong MV làm gì với chiếc xe của bạn trai?", a: "Đập phá bằng gậy golf", w: ["Sơn hồng toàn bộ", "Lái xuống hồ", "Bán đấu giá"], e: "Cảnh Taylor cầm gậy golf đập xe là một trong những hình ảnh nổi tiếng nhất của MV." },
+          { t: "mv", q: "MV Blank Space thắng những giải nào tại MTV VMA 2015?", a: "Best Pop Video và Best Female Video", w: ["Video of the Year và Best Direction", "Best Hip-Hop Video", "Best Rock Video"], e: "MV thắng Best Pop Video và Best Female Video tại VMA 2015." }
+        ]
+      },
+      {
+        id: "anti-hero", title: "Anti-Hero", year: 2022, album: "Midnights",
+        sources: [["The Line of Best Fit", "https://www.thelineofbestfit.com/news/taylor-swift-shares-self-directed-video-for-anti-hero-starring-mary-elizabeth-ellis-john-early-and-mike-birbiglia-as-her-children"], ["AV Club", "https://avclub.com/taylor-swift-midnights-anti-hero-music-video-1849687681"], ["The Crimson", "https://thecrimson.com/article/2022/11/1/taylor-swift-anti-hero-midnights-music-video-breakdown-review"]],
+        questions: [
+          { t: "nd", q: "Câu hát nổi tiếng nhất của Anti-Hero là gì?", a: "\"It's me, hi, I'm the problem, it's me\"", w: ["\"We are never ever getting back together\"", "\"Hello from the other side\"", "\"Haters gonna hate\""], e: "Câu hook tự nhận \"chính tôi là vấn đề\" nhanh chóng thành meme và trend." },
+          { t: "nd", q: "Anti-Hero xoay quanh chủ đề gì?", a: "Những bất an và sự tự ghét bản thân", w: ["Một cuộc tình mùa hè", "Lời chia tay với quê nhà", "Sự nổi loạn tuổi teen"], e: "Bài hát là màn tự soi chiếu những nỗi sợ, sự thiếu tự tin và mặt tối trong chính Taylor." },
+          { t: "nd", q: "Lời bài hát ví mình như \"monster on the hill\". Trong MV, ý này được thể hiện bằng hình ảnh gì?", a: "Một Taylor khổng lồ lạc lõng giữa mọi người", w: ["Taylor hóa thành rồng", "Taylor đeo mặt nạ quái vật", "Một con quái vật đuổi theo Taylor"], e: "MV cho Taylor to lớn quá cỡ, không vừa với không gian xung quanh, như \"quái vật trên đồi\"." },
+          { t: "gd", q: "Giọng điệu của Anti-Hero là gì?", a: "Tự giễu, vừa u tối vừa hài hước", w: ["Hân hoan, ăn mừng", "Giận dữ, trả thù", "Lãng mạn, mơ màng"], e: "Bài hát nói chuyện nặng nề bằng giọng điệu nhẹ nhàng, có phần châm biếm chính mình." },
+          { t: "gd", q: "Anti-Hero là đĩa đơn mở màn của album nào?", a: "Midnights", w: ["1989", "Folklore", "Lover"], e: "Anti-Hero là đĩa đơn chủ đạo của Midnights, phát hành 21/10/2022." },
+          { t: "mv", q: "Ai viết kịch bản và đạo diễn MV Anti-Hero?", a: "Chính Taylor Swift", w: ["Joseph Kahn", "Xavier Dolan", "Mike Birbiglia"], e: "Taylor tự viết và đạo diễn MV, mô tả đây là những \"kịch bản ác mộng và suy nghĩ xâm nhập\" của cô." },
+          { t: "mv", q: "Trong MV có bao nhiêu phiên bản Taylor?", a: "Ba", w: ["Một", "Hai", "Năm"], e: "Bản MV dài khoảng năm phút có ba phiên bản Taylor cùng xuất hiện." },
+          { t: "mv", q: "Cảnh hài nổi tiếng giữa MV diễn ra ở đâu?", a: "Đám tang của chính Taylor", w: ["Đám cưới của Taylor", "Lễ trao giải Grammy", "Buổi họp báo"], e: "Taylor dự đám tang của chính mình, nơi các \"con\" tương lai tranh cãi về di chúc." },
+          { t: "mv", q: "Ai đóng vai các con tranh di chúc của Taylor?", a: "Mike Birbiglia, John Early, Mary Elizabeth Ellis", w: ["Selena Gomez, Gigi Hadid, Karlie Kloss", "Sean O'Pry và Tristan Wilds", "Các thành viên ban nhạc HAIM"], e: "Ba diễn viên hài đóng các con; Mike Birbiglia vào vai Preston đọc di chúc." },
+          { t: "mv", q: "Theo di chúc trong MV, căn nhà bãi biển của Taylor bị biến thành gì?", a: "Khu bảo tồn mèo", w: ["Bảo tàng Taylor Swift", "Khách sạn năm sao", "Phòng thu âm"], e: "Di chúc để lại căn nhà bãi biển làm khu bảo tồn mèo, khiến các con nổi giận." }
+        ]
+      }
+    ]
+  },
+  {
+    id: "adele", name: "Adele", initial: "A",
+    meta: "Anh · soul, ballad, các album đặt tên theo tuổi",
+    songs: [
+      {
+        id: "hello", title: "Hello", year: 2015, album: "25",
+        sources: [["CBC", "https://www.cbc.ca/lite/story/1.3285408"], ["CTV News", "https://www.ctvnews.ca/entertainment/quebec-filmmaker-xavier-dolan-directs-new-adele-music-video-1.2622732"], ["/Film", "https://www.slashfilm.com/xavier-dolan-music-video-adele"]],
+        questions: [
+          { t: "nd", q: "Trong Hello, nhân vật đang làm gì?", a: "Gọi cho người yêu cũ sau nhiều năm để nói lời xin lỗi", w: ["Tỏ tình lần đầu", "Chào khán giả trước buổi diễn", "Chúc mừng sinh nhật mẹ"], e: "\"Hello, it's me\": cô gọi lại cho người cũ, muốn nói lời xin lỗi về những gì đã qua." },
+          { t: "nd", q: "\"Hello from the other side\" mang ý gì?", a: "Lời gọi vọng từ một phía xa cách về thời gian và khoảng cách", w: ["Lời chào từ thế giới bên kia", "Lời chào từ bên kia đại dương sau chuyến du lịch", "Lời chào từ sân khấu"], e: "\"Bên kia\" là khoảng cách không thể lấp đầy giữa hiện tại và quá khứ, giữa cô và người cũ." },
+          { t: "nd", q: "Câu hát nào thể hiện cô đã cố liên lạc rất nhiều lần?", a: "\"I must have called a thousand times\"", w: ["\"We could have had it all\"", "\"Never mind, I'll find someone like you\"", "\"It's me, hi, I'm the problem\""], e: "\"I must have called a thousand times\": cô đã gọi hàng nghìn lần mà không ai nghe máy." },
+          { t: "gd", q: "Giọng điệu của Hello là gì?", a: "Tiếc nuối, hoài niệm, da diết", w: ["Vui tươi, nhí nhảnh", "Châm biếm, tự giễu", "Hưng phấn như nhạc tiệc"], e: "Bản ballad bắt đầu trầm lắng rồi bùng nổ ở điệp khúc, chở đầy nỗi tiếc nuối." },
+          { t: "gd", q: "Hello là đĩa đơn mở màn của album nào?", a: "25", w: ["19", "21", "30"], e: "Hello (2015) mở màn album 25. Adele đặt tên album theo tuổi của mình khi sáng tác." },
+          { t: "mv", q: "Ai đạo diễn MV Hello?", a: "Xavier Dolan", w: ["Sam Brown", "Joseph Kahn", "Kawaii"], e: "Đạo diễn người Quebec Xavier Dolan thực hiện MV." },
+          { t: "mv", q: "MV Hello được quay ở đâu?", a: "Quebec, Canada", w: ["London, Anh", "Paris, Pháp", "New York, Mỹ"], e: "MV quay tại Quebec tháng 9/2015, trong đó có thị trấn Dunham và một căn hộ ở Montreal." },
+          { t: "mv", q: "Ai đóng vai người yêu cũ của Adele?", a: "Tristan Wilds", w: ["Sean O'Pry", "Mike Birbiglia", "Isaac"], e: "Tristan Wilds, diễn viên phim The Wire và 90210, vào vai người yêu cũ." },
+          { t: "mv", q: "Chiếc điện thoại Adele dùng trong MV gây chú ý vì sao?", a: "Là điện thoại nắp gập kiểu cũ", w: ["Là iPhone đời mới nhất", "Là điện thoại bàn quay số", "Bị vỡ màn hình"], e: "Chiếc điện thoại nắp gập trở thành chi tiết được bàn tán, hợp với không khí hoài cổ của MV." },
+          { t: "mv", q: "MV Hello có điểm kỹ thuật đặc biệt nào?", a: "Có cảnh quay bằng máy quay IMAX", w: ["Quay hoàn toàn bằng điện thoại", "Là MV hoạt hình 3D", "Quay một cảnh duy nhất không cắt"], e: "Dolan dùng máy IMAX cho hai cảnh quay giàu cảm xúc nhất. MV cũng đan xen quá khứ và hiện tại." }
+        ]
+      },
+      {
+        id: "rolling-in-the-deep", title: "Rolling in the Deep", year: 2010, album: "21",
+        sources: [["Wikipedia", "https://en.wikipedia.org/wiki/Rolling_in_the_Deep"], ["The Fader", "https://www.thefader.com/2010/12/09/video-adele-rolling-in-the-deep-2"], ["Yahoo / Billboard", "https://www.yahoo.com/entertainment/adele-rolling-deep-music-video-152030680.html"]],
+        questions: [
+          { t: "nd", q: "Rolling in the Deep nói về điều gì?", a: "Cơn giận và lời cảnh báo gửi người yêu đã phụ bạc", w: ["Lời cầu hôn ngọt ngào", "Niềm vui khi được thăng chức", "Tình bạn thời thơ ấu"], e: "Bài hát là lời đáp trả đầy giận dữ sau một cuộc chia tay đau đớn." },
+          { t: "nd", q: "Câu hát nào lặp lại như lời tiếc nuối đầy trách móc?", a: "\"We could have had it all\"", w: ["\"Hello, it's me\"", "\"Shake it off\"", "\"Let it go\""], e: "\"We could have had it all\": lẽ ra hai người đã có tất cả, nhưng người kia đã phá hỏng." },
+          { t: "nd", q: "Rolling in the Deep nằm trong album nào?", a: "21", w: ["19", "25", "30"], e: "Đây là đĩa đơn mở màn album 21, album đưa Adele thành hiện tượng toàn cầu." },
+          { t: "gd", q: "Giọng điệu của bài hát là gì?", a: "Phẫn nộ, mạnh mẽ, đầy nội lực", w: ["Thì thầm, mơ màng", "Vui nhộn, trẻ con", "Lạnh lùng, vô cảm"], e: "Adele hát với giọng đầy nội lực trên nền nhịp trống dồn dập, nghe như một lời tuyên chiến." },
+          { t: "gd", q: "Màu âm nhạc nổi bật của bài là gì?", a: "Soul pha gospel, có hợp xướng bè phụ họa", w: ["EDM future bass", "Bolero", "Heavy metal"], e: "Nhịp vỗ tay, bè hợp xướng và giọng soul tạo cảm giác gospel mạnh mẽ." },
+          { t: "mv", q: "Ai đạo diễn MV Rolling in the Deep?", a: "Sam Brown", w: ["Xavier Dolan", "Joseph Kahn", "August Frogs"], e: "Sam Brown đạo diễn. MV ra mắt trên Channel 4 ngày 3/12/2010." },
+          { t: "mv", q: "MV mở đầu với Adele ở đâu?", a: "Ngồi hát trên ghế trong một ngôi nhà bỏ hoang", w: ["Đứng trên sân khấu sân vận động", "Lái xe trên đường cao tốc", "Đi dạo bên bờ biển"], e: "Adele ngồi trên ghế trong căn nhà bỏ hoang, ánh sáng tối, tập trung vào giọng hát." },
+          { t: "mv", q: "Hình ảnh nào trong MV minh họa nhịp trống như nhịp tim?", a: "Những ly nước trong phòng rung theo tiếng trống", w: ["Đèn chớp tắt theo nhịp", "Lá cây rơi theo nhịp", "Sóng biển vỗ theo nhịp"], e: "Billboard mô tả căn phòng đầy ly nước khẽ rung theo nhịp trống bass như nhịp tim của bài hát." },
+          { t: "mv", q: "MV giành bao nhiêu giải MTV VMA?", a: "3 (Dựng phim, Quay phim, Chỉ đạo mỹ thuật)", w: ["Không giải nào", "1 (Video của năm)", "5 giải"], e: "MV thắng Best Editing, Best Cinematography và Best Art Direction." },
+          { t: "mv", q: "MV Rolling in the Deep đạt cột mốc nào trên YouTube?", a: "2 tỷ lượt xem", w: ["100 triệu lượt xem", "500 triệu lượt xem", "10 tỷ lượt xem"], e: "Đây là MV thứ hai của Adele vượt mốc 2 tỷ lượt xem trên YouTube." }
+        ]
+      }
+    ]
+  }
+];
+const COMING = "Bạn muốn ca sĩ nào tiếp theo?";
+const CATS = [["all", "Tất cả"], ["nd", "Nội dung"], ["gd", "Giọng điệu"], ["mv", "Bối cảnh MV"]];
+const CAT_NAME = { nd: "Nội dung", gd: "Giọng điệu", mv: "Bối cảnh MV" };
+const KEYS = ["A", "B", "C", "D"];
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+const best = {
+  get(id) { return Number(store.get("best:" + id)) || 0; },
+  set(id, v) { if (v > this.get(id)) store.set("best:" + id, v); }
+};
+let cat = CATS.some(([k]) => k === store.get("cat")) ? store.get("cat") : "all";
+let state = null;
+
+const findArtist = (id) => ARTISTS.find((a) => a.id === id);
+const allQs = (artist) => artist.songs.flatMap((s) => s.questions.map((q) => ({ ...q, song: s.title })));
+const byCat = (qs, c) => (c === "all" ? qs : qs.filter((q) => q.t === c));
+const count = (qs) => qs.length;
+
+function setTheme(id) { document.body.dataset.theme = id; }
+
+function renderShelf() {
+  const cards = ARTISTS.map((a) => {
+    const n = count(allQs(a));
+    return `<button class="artist" data-id="${a.id}" data-theme="${a.id}">
+      <span class="cover" aria-hidden="true"><span class="vinyl"></span><span class="initial">${esc(a.initial)}</span></span>
+      <span class="body">
+        <span class="label">${a.songs.length} bài hát</span>
+        <h3>${esc(a.name)}</h3>
+        <span class="meta">${esc(a.meta)}</span>
+        <span class="row"><span class="pill">${n} câu hỏi</span></span>
+      </span>
+    </button>`;
+  }).join("");
+  const soon = `<div class="artist soon" aria-disabled="true"><span class="cover" aria-hidden="true">+</span><span class="body"><span class="label">Sắp có</span><h3>${esc(COMING)}</h3><span class="meta">Ca sĩ và bài hát mới sẽ được thêm vào thư viện.</span></span></div>`;
+  $("#shelf").innerHTML = cards + soon;
+  $("#shelf").querySelectorAll(".artist[data-id]").forEach((el) => el.addEventListener("click", () => { location.hash = el.dataset.id; }));
+}
+
+function showLibrary() {
+  state = null;
+  setTheme("home");
+  $("#view").hidden = true;
+  $("#library").hidden = false;
+  renderShelf();
+  $("#foot").innerHTML = "Thứ tự câu hỏi và đáp án được xáo mỗi lượt. Kỷ lục chỉ lưu trên trình duyệt của bạn.";
+}
+
+function topbar(left, right) {
+  return `<div class="topbar"><button class="back" id="back">${left}</button><span class="label">${esc(right)}</span></div>`;
+}
+
+function renderArtist(artist) {
+  state = null;
+  setTheme(artist.id);
+  $("#library").hidden = true;
+  $("#view").hidden = false;
+  const all = allQs(artist);
+  const chips = CATS.map(([k, n]) => `<button class="chip" data-cat="${k}" aria-pressed="${k === cat}">${n}<small>${count(byCat(all, k))}</small></button>`).join("");
+  const rows = artist.songs.map((s, k) => {
+    const n = count(byCat(s.questions.map((q) => q), cat));
+    const b = best.get(`${artist.id}/${s.id}/${cat}`);
+    return `<li><button class="song" data-song="${s.id}" ${n ? "" : "disabled"}>
+      <span class="no">${String(k + 1).padStart(2, "0")}</span>
+      <span><h3>${esc(s.title)}</h3><span class="sub">${s.year} · ${esc(s.album)} · ${n} câu${b ? ` · kỷ lục ${b}/${n}` : ""}</span></span>
+      <span class="go">Chơi →</span>
+    </button></li>`;
+  }).join("");
+  const nAll = count(byCat(all, cat));
+  $("#view").innerHTML = `
+    ${topbar("← Tất cả ca sĩ", artist.meta)}
+    <div class="hero"><span class="label">Ca sĩ</span><h1>${esc(artist.name)}</h1><p>Chọn nhóm câu hỏi, rồi chọn một bài hát hoặc trộn cả ${artist.songs.length} bài.</p></div>
+    <div class="filter"><span class="label">Nhóm câu hỏi</span><div class="chips" role="group" aria-label="Nhóm câu hỏi">${chips}</div></div>
+    <ul class="tracks">
+      ${rows}
+      <li><button class="song all" data-song="all"><span class="no">∞</span><span><h3>Trộn tất cả bài hát</h3><span class="sub">${nAll} câu · ${CATS.find(([k]) => k === cat)[1]}</span></span><span class="go">Chơi →</span></button></li>
+    </ul>`;
+  $("#back").addEventListener("click", () => { location.hash = ""; });
+  $("#view").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { cat = b.dataset.cat; store.set("cat", cat); renderArtist(artist); }));
+  $("#view").querySelectorAll(".song").forEach((b) => b.addEventListener("click", () => { location.hash = `${artist.id}/${b.dataset.song}/${cat}`; }));
+  $("#foot").innerHTML = `Nguồn dữ kiện: ${artist.songs.flatMap((s) => s.sources).map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`).join(", ")}.`;
+  window.scrollTo(0, 0);
+}
+
+function start(artist, songId, c) {
+  const song = artist.songs.find((s) => s.id === songId);
+  const pool = song ? song.questions.map((q) => ({ ...q, song: song.title })) : allQs(artist);
+  const qs = shuffle(byCat(pool, c)).map((x) => ({ ...x, opts: shuffle([x.a, ...x.w]) }));
+  if (!qs.length) return renderArtist(artist);
+  state = { artist, song, c, key: `${artist.id}/${songId}/${c}`, qs, i: 0, picks: [] };
+  setTheme(artist.id);
+  $("#library").hidden = true;
+  $("#view").hidden = false;
+  $("#foot").innerHTML = `Nguồn dữ kiện: ${(song ? song.sources : artist.songs.flatMap((s) => s.sources)).map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`).join(", ")}.`;
+  renderQ();
+  window.scrollTo(0, 0);
+}
+
+function title() { return state.song ? state.song.title : "Trộn tất cả bài hát"; }
+function sub() { return `${state.artist.name} · ${CATS.find(([k]) => k === state.c)[1]}`; }
+
+function trk() {
+  return `<div class="trk" aria-hidden="true">${state.qs.map((q, k) => {
+    const p = state.picks[k];
+    const cls = p === undefined ? (k === state.i ? "now" : "") : (p === q.a ? "ok" : "no");
+    return `<span class="${cls}"></span>`;
+  }).join("")}</div>`;
+}
+function correct(list) { return (list || state.qs).filter((q) => state.picks[state.qs.indexOf(q)] === q.a).length; }
+
+function renderQ() {
+  const { qs, i } = state;
+  const q = qs[i];
+  const picked = state.picks[i];
+  const done = picked !== undefined;
+  const ok = picked === q.a;
+  $("#view").innerHTML = `
+    ${topbar(`← ${esc(state.artist.name)}`, sub())}
+    <div class="hero"><span class="label">${state.song ? state.song.year + " · " + esc(state.song.album) : state.artist.songs.length + " bài hát"}</span><h1>${esc(title())}</h1></div>
+    ${trk()}
+    <article class="card">
+      <div class="qhead"><span class="left"><span class="num">Câu ${String(i + 1).padStart(2, "0")} / ${qs.length}</span><span class="tag ${q.t}">${CAT_NAME[q.t]}</span></span><span class="score">Đúng ${correct()}</span></div>
+      ${state.song ? "" : `<div class="from">Bài: ${esc(q.song)}</div>`}
+      <h2 class="q">${esc(q.q)}</h2>
+      <div class="opts">${q.opts.map((o, k) => {
+        let cls = "";
+        if (done && o === q.a) cls = "right";
+        else if (done && o === picked) cls = "wrong";
+        return `<button class="opt ${cls}" data-k="${k}" ${done ? "disabled" : ""}><span class="key">${KEYS[k]}</span><span>${esc(o)}</span></button>`;
+      }).join("")}</div>
+      ${done ? `<div class="explain ${ok ? "ok" : "no"}"><strong>${ok ? "Chính xác!" : "Chưa đúng. Đáp án: " + esc(q.a)}</strong><p>${esc(q.e)}</p></div>
+      <div class="actions"><button class="btn" id="next">${i + 1 < qs.length ? "Câu tiếp theo →" : "Xem kết quả"}</button></div>` : ""}
+    </article>`;
+  $("#back").addEventListener("click", () => { location.hash = state.artist.id; });
+  $("#view").querySelectorAll(".opt:not(:disabled)").forEach((b) => b.addEventListener("click", () => pick(q.opts[Number(b.dataset.k)])));
+  const nx = $("#next");
+  if (nx) { nx.addEventListener("click", next); nx.focus({ preventScroll: true }); }
+}
+
+function pick(o) {
+  if (state.picks[state.i] !== undefined) return;
+  state.picks[state.i] = o;
+  renderQ();
+}
+function next() {
+  if (state.i + 1 < state.qs.length) { state.i++; renderQ(); }
+  else renderResult();
+}
+
+function verdict(r) {
+  if (r === 1) return "Fan cứng chính hiệu. Bạn thuộc từng câu hát, từng khung hình.";
+  if (r >= .75) return "Rất ấn tượng. Bạn nghe kỹ và xem MV kỹ.";
+  if (r >= .5) return "Khá ổn. Nghe lại vài lần và xem lại MV là thành fan cứng.";
+  return "Đến lúc bật lại bài hát và xem MV rồi.";
+}
+
+function renderResult() {
+  const { qs } = state;
+  const c = correct();
+  best.set(state.key, c);
+  const groups = ["nd", "gd", "mv"].map((t) => [t, qs.filter((q) => q.t === t)]).filter(([, l]) => l.length);
+  $("#view").innerHTML = `
+    ${topbar(`← ${esc(state.artist.name)}`, sub())}
+    <div class="hero"><span class="label">Kết quả</span><h1>${esc(title())}</h1></div>
+    ${trk()}
+    <article class="card">
+      <div class="big">${c}<small> / ${qs.length}</small></div>
+      <p class="verdict">${verdict(c / qs.length)}</p>
+      ${groups.length > 1 ? `<div class="breakdown">${groups.map(([t, l]) => `<div><span class="label">${CAT_NAME[t]}</span><b>${correct(l)} / ${l.length}</b></div>`).join("")}</div>` : ""}
+      <ul class="review">${qs.map((q, k) => {
+        const ok = state.picks[k] === q.a;
+        return `<li><span class="mark ${ok ? "ok" : "no"}">${ok ? "✓" : "✗"}</span><span>${esc(q.q)}<br><span class="ans">${ok ? esc(q.a) : `Bạn chọn ${esc(state.picks[k])} · Đáp án ${esc(q.a)}`}</span></span></li>`;
+      }).join("")}</ul>
+      <div class="actions">
+        <button class="btn ghost" id="lib">Chọn bài khác</button>
+        <button class="btn" id="again">Chơi lại</button>
+      </div>
+    </article>`;
+  $("#back").addEventListener("click", () => { location.hash = state.artist.id; });
+  $("#lib").addEventListener("click", () => { location.hash = state.artist.id; });
+  $("#again").addEventListener("click", () => start(state.artist, state.song ? state.song.id : "all", state.c));
+  window.scrollTo(0, 0);
+}
+
+function route() {
+  const [aid, sid, c] = location.hash.slice(1).split("/");
+  const artist = findArtist(aid);
+  if (!artist) return showLibrary();
+  if (!sid) return renderArtist(artist);
+  const cc = CATS.some(([k]) => k === c) ? c : "all";
+  if (sid !== "all" && !artist.songs.some((s) => s.id === sid)) return renderArtist(artist);
+  cat = cc;
+  start(artist, sid, cc);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!state || $("#view").hidden) return;
+  const k = KEYS.indexOf(e.key.toUpperCase());
+  const btns = $("#view").querySelectorAll(".opt:not(:disabled)");
+  if (k >= 0 && btns[k]) btns[k].click();
+});
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>
