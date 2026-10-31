@@ -141,9 +141,6 @@ body:not([data-theme="home"]) .mast { display: none; }
 .song h3 { font-size: 21px; }
 .song .sub { font-size: 13px; color: var(--muted); }
 .song .go { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.song.all { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-.song.all .no { background: transparent; color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent-ink) 40%, transparent); }
-.song.all .sub, .song.all .go { color: var(--accent-ink); opacity: .85; }
 
 /* Quiz */
 .trk { display: grid; grid-auto-flow: column; gap: 3px; }
@@ -157,7 +154,6 @@ body:not([data-theme="home"]) .mast { display: none; }
 .num, .score { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13px; font-variant-numeric: tabular-nums; }
 .num { color: var(--accent); }
 .score { color: var(--muted); }
-.from { font-size: 13px; color: var(--muted); margin-top: -12px; }
 .q { font-size: clamp(22px, 4.5vw, 28px); font-family: "Fraunces", Georgia, serif; font-weight: 700; }
 .opts { display: grid; gap: 10px; }
 .opt {
@@ -450,14 +446,12 @@ function renderArtist(artist) {
       <span class="go">Chơi →</span>
     </button></li>`;
   }).join("");
-  const nAll = count(byCat(all, cat));
   $("#view").innerHTML = `
     ${topbar("← Tất cả ca sĩ", artist.meta)}
-    <div class="hero"><span class="label">Ca sĩ</span><h1>${esc(artist.name)}</h1><p>Chọn nhóm câu hỏi, rồi chọn một bài hát hoặc trộn cả ${artist.songs.length} bài.</p></div>
+    <div class="hero"><span class="label">Ca sĩ</span><h1>${esc(artist.name)}</h1><p>Chọn nhóm câu hỏi, rồi chọn một bài hát để bắt đầu.</p></div>
     <div class="filter"><span class="label">Nhóm câu hỏi</span><div class="chips" role="group" aria-label="Nhóm câu hỏi">${chips}</div></div>
     <ul class="tracks">
       ${rows}
-      <li><button class="song all" data-song="all"><span class="no">∞</span><span><h3>Trộn tất cả bài hát</h3><span class="sub">${nAll} câu · ${CATS.find(([k]) => k === cat)[1]}</span></span><span class="go">Chơi →</span></button></li>
     </ul>`;
   $("#back").addEventListener("click", () => { location.hash = ""; });
   $("#view").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { cat = b.dataset.cat; store.set("cat", cat); renderArtist(artist); }));
@@ -468,19 +462,18 @@ function renderArtist(artist) {
 
 function start(artist, songId, c) {
   const song = artist.songs.find((s) => s.id === songId);
-  const pool = song ? song.questions.map((q) => ({ ...q, song: song.title })) : allQs(artist);
-  const qs = shuffle(byCat(pool, c)).map((x) => ({ ...x, opts: shuffle([x.a, ...x.w]) }));
+  const qs = shuffle(byCat(song.questions, c)).map((x) => ({ ...x, opts: shuffle([x.a, ...x.w]) }));
   if (!qs.length) return renderArtist(artist);
   state = { artist, song, c, key: `${artist.id}/${songId}/${c}`, qs, i: 0, picks: [] };
   setTheme(artist.id);
   $("#library").hidden = true;
   $("#view").hidden = false;
-  $("#foot").innerHTML = `Nguồn dữ kiện: ${(song ? song.sources : artist.songs.flatMap((s) => s.sources)).map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`).join(", ")}.`;
+  $("#foot").innerHTML = `Nguồn dữ kiện: ${song.sources.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(n)}</a>`).join(", ")}.`;
   renderQ();
   window.scrollTo(0, 0);
 }
 
-function title() { return state.song ? state.song.title : "Trộn tất cả bài hát"; }
+function title() { return state.song.title; }
 function sub() { return `${state.artist.name} · ${CATS.find(([k]) => k === state.c)[1]}`; }
 
 function trk() {
@@ -500,11 +493,10 @@ function renderQ() {
   const ok = picked === q.a;
   $("#view").innerHTML = `
     ${topbar(`← ${esc(state.artist.name)}`, sub())}
-    <div class="hero"><span class="label">${state.song ? state.song.year + " · " + esc(state.song.album) : state.artist.songs.length + " bài hát"}</span><h1>${esc(title())}</h1></div>
+    <div class="hero"><span class="label">${state.song.year} · ${esc(state.song.album)}</span><h1>${esc(title())}</h1></div>
     ${trk()}
     <article class="card">
       <div class="qhead"><span class="left"><span class="num">Câu ${String(i + 1).padStart(2, "0")} / ${qs.length}</span><span class="tag ${q.t}">${CAT_NAME[q.t]}</span></span><span class="score">Đúng ${correct()}</span></div>
-      ${state.song ? "" : `<div class="from">Bài: ${esc(q.song)}</div>`}
       <h2 class="q">${esc(q.q)}</h2>
       <div class="opts">${q.opts.map((o, k) => {
         let cls = "";
@@ -562,7 +554,7 @@ function renderResult() {
     </article>`;
   $("#back").addEventListener("click", () => { location.hash = state.artist.id; });
   $("#lib").addEventListener("click", () => { location.hash = state.artist.id; });
-  $("#again").addEventListener("click", () => start(state.artist, state.song ? state.song.id : "all", state.c));
+  $("#again").addEventListener("click", () => start(state.artist, state.song.id, state.c));
   window.scrollTo(0, 0);
 }
 
@@ -572,7 +564,7 @@ function route() {
   if (!artist) return showLibrary();
   if (!sid) return renderArtist(artist);
   const cc = CATS.some(([k]) => k === c) ? c : "all";
-  if (sid !== "all" && !artist.songs.some((s) => s.id === sid)) return renderArtist(artist);
+  if (!artist.songs.some((s) => s.id === sid)) return renderArtist(artist);
   cat = cc;
   start(artist, sid, cc);
 }
